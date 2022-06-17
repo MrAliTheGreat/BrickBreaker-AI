@@ -2,6 +2,25 @@ import math
 import pygame
 
 
+class Ball():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.angle = -1
+        self.isMoving = False
+
+    def updateBall(self, new_x, new_y, new_angle, new_isMoving):
+        self.x = new_x
+        self.y = new_y
+        self.angle = new_angle
+        self.isMoving = new_isMoving
+
+    def startMoving(self, new_angle):
+        self.angle = new_angle 
+        self.isMoving = True     
+
+
+
 def applyAngleRestriction(angle):
     if(radian2degree(angle) >= 170):
         return degree2radian(170)
@@ -43,6 +62,7 @@ def moveBall(current_x, current_y, moveAngle):
     return current_x + MOVE_SPEED * math.cos(moveAngle), current_y - MOVE_SPEED * math.sin(moveAngle), moveAngle
 
 
+
 pygame.init()
 clock = pygame.time.Clock()
 
@@ -50,50 +70,83 @@ SCREEN_WIDTH = 800; SCREEN_HEIGHT = 600
 FPS = 30
 MOVE_SPEED = 5
 INDICATOR_LENGTH = 150
-BALL_X = SCREEN_WIDTH // 2; BALL_Y = 590
-
 
 screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
+
 running = True
-moveBallFlag = False; drawIndicatorFlag = True; detectMouseClickFlag = True
+initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
+balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]
+ball_starting_point_x = SCREEN_WIDTH // 2
+cyclesPast = 0
 
 while(running):
     for event in pygame.event.get():
         if(event.type == pygame.QUIT):
             running = False
         elif(event.type == pygame.MOUSEBUTTONDOWN and detectMouseClickFlag):
-            moveBallFlag = True; drawIndicatorFlag = False; detectMouseClickFlag = False
-            moveAngle = calculateAngle(
-                start_x = BALL_X,
-                start_y = BALL_Y,
+            starting_ball_missing = True; drawIndicatorFlag = False; detectMouseClickFlag = False
+            starting_angle = calculateAngle(
+                start_x = ball_starting_point_x,
+                start_y = 590,
                 end_x = pygame.mouse.get_pos()[0],
                 end_y = pygame.mouse.get_pos()[1]
-            )
+            )            
+            balls[0].startMoving(starting_angle)
+            initialMovement = True
 
 
     screen.fill( (0, 0, 0) )
 
-    if(moveBallFlag):
-        BALL_X, BALL_Y, moveAngle = moveBall(
-            current_x = BALL_X,
-            current_y = BALL_Y,
-            moveAngle = moveAngle
-        )
-        if(moveAngle == -1):
-            moveBallFlag = False; drawIndicatorFlag = True; detectMouseClickFlag = True
-            BALL_Y = 590
+    areBallsMoving = False; cyclesPast += 1
+    for ball in balls:
+        if(ball.isMoving):
+            new_isMoving = True
+            new_x, new_y, new_angle = moveBall(
+                current_x = ball.x,
+                current_y = ball.y,
+                moveAngle = ball.angle
+            )
+            if(new_angle == -1):
+                if(starting_ball_missing):
+                    ball_starting_point_x = ball.x
+                    starting_ball_missing = False
+                new_x = ball_starting_point_x; new_y = 590; new_isMoving = False
+                initialMovement = False
 
-    pygame.draw.circle(
-        surface = screen,
-        color = pygame.Color("#FDA172"),
-        center = (BALL_X, BALL_Y),
-        radius = 5
-    )
+            areBallsMoving = True      
+            ball.updateBall(
+                new_x = new_x,
+                new_y = new_y,
+                new_angle = new_angle,
+                new_isMoving = new_isMoving
+            )
+
+    for ball in balls:
+        pygame.draw.circle(
+            surface = screen,
+            color = pygame.Color("#FDA172"),
+            center = (ball.x, ball.y),
+            radius = 5
+        )
+    
+    if(initialMovement and cyclesPast % 5 == 0):
+        cyclesPast = 0
+        newBall = Ball(
+            x = ball_starting_point_x,
+            y = 590
+        )
+        newBall.startMoving(starting_angle)
+        balls.append(newBall)
+    
+    if(not areBallsMoving):
+        initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
+        balls.clear()
+        balls = [Ball(x = ball_starting_point_x, y = 590)]
     
     if(drawIndicatorFlag):
         indicatorAngle = calculateAngle(
-            start_x = BALL_X,
-            start_y = BALL_Y,
+            start_x = ball_starting_point_x,
+            start_y = 590,
             end_x = pygame.mouse.get_pos()[0],
             end_y = pygame.mouse.get_pos()[1]
         )
@@ -102,12 +155,12 @@ while(running):
             surface = screen,
             color = pygame.Color("#FFFFFF"),
             start_pos = (
-                BALL_X + 7 * math.cos(indicatorAngle),
-                BALL_Y - 7 * math.sin(indicatorAngle)
+                ball_starting_point_x + 7 * math.cos(indicatorAngle),
+                590 - 7 * math.sin(indicatorAngle)
             ),
             end_pos = (
-                BALL_X + (7 + INDICATOR_LENGTH) * math.cos(indicatorAngle),
-                BALL_Y - (7 + INDICATOR_LENGTH) * math.sin(indicatorAngle)
+                ball_starting_point_x + (7 + INDICATOR_LENGTH) * math.cos(indicatorAngle),
+                590 - (7 + INDICATOR_LENGTH) * math.sin(indicatorAngle)
             ),
             width = 2
         )
