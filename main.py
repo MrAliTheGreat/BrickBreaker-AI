@@ -3,6 +3,18 @@ import pygame
 from sympy import degree
 
 
+def calculateAngle(start_x, start_y, end_x, end_y):
+    if(end_x == start_x):
+        return math.pi / 2
+      
+    angle = math.atan((end_y - start_y) / (end_x - start_x))
+    if(angle <= 0):
+        return abs(angle)
+
+    return math.pi - angle
+
+
+
 pygame.init()
 clock = pygame.time.Clock()
 
@@ -13,38 +25,34 @@ MOVE_SPEED = 5
 
 screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
 running = True
-moveBall = False; drawIndicator = True
+moveBall = False; drawIndicator = True; detectMouseClick = True
 
 while(running):
     for event in pygame.event.get():
         if(event.type == pygame.QUIT):
             running = False
-        elif(event.type == pygame.MOUSEBUTTONDOWN):
-            drawIndicator = False
-            moveBall = True
-
-            if(pygame.mouse.get_pos()[0] == BALL_X):
-                moveDegree = math.pi / 2
-            else:
-                moveDegree = math.atan((pygame.mouse.get_pos()[1] - BALL_Y) / (pygame.mouse.get_pos()[0] - BALL_X))
-                if(moveDegree <= 0):
-                    moveDegree = abs(moveDegree)
-                else:
-                    moveDegree = math.pi - moveDegree
+        elif(event.type == pygame.MOUSEBUTTONDOWN and detectMouseClick):
+            moveBall = True; drawIndicator = False; detectMouseClick = False
+            angle = calculateAngle(
+                start_x = BALL_X,
+                start_y = BALL_Y,
+                end_x = pygame.mouse.get_pos()[0],
+                end_y = pygame.mouse.get_pos()[1]
+            )
 
 
     screen.fill( (0, 0, 0) )
 
     if(moveBall):
         if((BALL_X >= SCREEN_WIDTH or BALL_X <= 0) and (BALL_Y >= SCREEN_HEIGHT or BALL_Y <= 0)):
-            moveDegree = math.pi + moveDegree        
+            angle = math.pi + angle        
         elif(BALL_X >= SCREEN_WIDTH or BALL_X <= 0):
-            moveDegree = math.pi - moveDegree
+            angle = math.pi - angle
         elif(BALL_Y >= SCREEN_HEIGHT or BALL_Y <= 0):
-            moveDegree = 2 * math.pi - moveDegree
+            angle = 2 * math.pi - angle
 
-        BALL_X += MOVE_SPEED * math.cos(moveDegree)
-        BALL_Y -= MOVE_SPEED * math.sin(moveDegree)
+        BALL_X += MOVE_SPEED * math.cos(angle)
+        BALL_Y -= MOVE_SPEED * math.sin(angle)
 
     else:
         BALL_X = SCREEN_WIDTH // 2; BALL_Y = 590
