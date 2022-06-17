@@ -36,10 +36,15 @@ while(running):
     screen.fill( (0, 0, 0) )
 
     if(moveBall):
+        if((BALL_X >= SCREEN_WIDTH or BALL_X <= 0) and (BALL_Y >= SCREEN_HEIGHT or BALL_Y <= 0)):
+            moveDegree = math.pi + moveDegree        
+        elif(BALL_X >= SCREEN_WIDTH or BALL_X <= 0):
+            moveDegree = math.pi - moveDegree
+        elif(BALL_Y >= SCREEN_HEIGHT or BALL_Y <= 0):
+            moveDegree = 2 * math.pi - moveDegree
+
         BALL_X += MOVE_SPEED * math.cos(moveDegree)
         BALL_Y -= MOVE_SPEED * math.sin(moveDegree)
-        print(f"moveDegree: {moveDegree * 180 / math.pi}")
-        print(f"Ball --> x: {BALL_X}, y: {BALL_Y}")
 
     else:
         BALL_X = SCREEN_WIDTH // 2; BALL_Y = 590
