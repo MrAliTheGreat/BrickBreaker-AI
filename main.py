@@ -66,6 +66,8 @@ def moveBall(current_x, current_y, moveAngle):
 pygame.init()
 clock = pygame.time.Clock()
 
+textFont = pygame.font.SysFont("Comic Sans MS", 20)
+
 SCREEN_WIDTH = 800; SCREEN_HEIGHT = 600
 FPS = 30
 MOVE_SPEED = 5
@@ -78,6 +80,7 @@ initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
 balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]
 ball_starting_point_x = SCREEN_WIDTH // 2
 cyclesPast = 0
+score = 1; numBallsInPlay = 1
 
 while(running):
     for event in pygame.event.get():
@@ -93,6 +96,7 @@ while(running):
             )            
             balls[0].startMoving(starting_angle)
             initialMovement = True
+            score += 1
 
 
     screen.fill( (0, 0, 0) )
@@ -121,6 +125,7 @@ while(running):
                 new_isMoving = new_isMoving
             )
 
+
     for ball in balls:
         pygame.draw.circle(
             surface = screen,
@@ -129,20 +134,26 @@ while(running):
             radius = 5
         )
     
+
     if(initialMovement and cyclesPast % 5 == 0):
         cyclesPast = 0
-        newBall = Ball(
-            x = ball_starting_point_x,
-            y = 590
-        )
-        newBall.startMoving(starting_angle)
-        balls.append(newBall)
+        if(numBallsInPlay < score - 1):
+            newBall = Ball(
+                x = ball_starting_point_x,
+                y = 590
+            )
+            newBall.startMoving(starting_angle)
+            balls.append(newBall)
+            numBallsInPlay += 1
     
+
     if(not areBallsMoving):
+        numBallsInPlay = 1
         initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
         balls.clear()
         balls = [Ball(x = ball_starting_point_x, y = 590)]
-    
+
+
     if(drawIndicatorFlag):
         indicatorAngle = calculateAngle(
             start_x = ball_starting_point_x,
@@ -165,7 +176,13 @@ while(running):
             width = 2
         )
 
-    # Update the screen
+
+    if(areBallsMoving):
+        displayScore = score - 1
+    else:
+        displayScore = score    
+    scoreText = textFont.render(f"Score: {displayScore}", True, pygame.Color("#FFFFFF")) # text, antialias, color
+    screen.blit(source = scoreText, dest = (10, 10))
     pygame.display.flip()
     
     clock.tick(FPS)
