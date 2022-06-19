@@ -1,5 +1,6 @@
 import math
 import pygame
+from random import randint
 
 
 class Ball():
@@ -8,6 +9,7 @@ class Ball():
         self.y = y
         self.angle = -1
         self.isMoving = False
+        self.color = pygame.Color("#FDA172")
 
     def updateBall(self, new_x, new_y, new_angle, new_isMoving):
         self.x = new_x
@@ -17,7 +19,32 @@ class Ball():
 
     def startMoving(self, new_angle):
         self.angle = new_angle 
-        self.isMoving = True     
+        self.isMoving = True
+
+    def drawBall(self, screen):
+        pygame.draw.circle(
+            surface = screen,
+            color = self.color,
+            center = (self.x, self.y),
+            radius = 5
+        )           
+
+class Block():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.width = 75
+        self.height = 30
+        self.color = pygame.Color("#CAFEA7")
+
+    def drawBlock(self, screen):
+        pygame.draw.rect(
+            surface = screen,
+            color = self.color,
+            rect = (self.x, self.y, self.width, self.height)
+        )        
+
+
 
 
 
@@ -61,6 +88,29 @@ def moveBall(current_x, current_y, moveAngle):
 
     return current_x + MOVE_SPEED * math.cos(moveAngle), current_y - MOVE_SPEED * math.sin(moveAngle), moveAngle
 
+def generateNewRowOfBlocks():
+    distanceToNextHorizontalBlock = 79
+    # distanceToNextVerticalBlock = 33    
+    generatedBlocks = []
+    numBlocks = randint(1, 10)
+    for _ in range(numBlocks):
+        generatedBlocks.append(
+            Block(
+                x = STARTING_BLOCK_X + randint(0, 9) * distanceToNextHorizontalBlock,
+                y = STARTING_BLOCK_Y
+            )
+        )
+    return generatedBlocks
+
+
+def drawBalls(screen, balls):
+    for ball in balls:
+        ball.drawBall(screen)
+
+def drawBlocks(screen, blocks):
+    for block in blocks:
+        block.drawBlock(screen)
+
 
 
 pygame.init()
@@ -72,11 +122,12 @@ SCREEN_WIDTH = 800; SCREEN_HEIGHT = 600
 FPS = 30
 MOVE_SPEED = 5
 INDICATOR_LENGTH = 150
+STARTING_BLOCK_X = 10; STARTING_BLOCK_Y = 50
 
 screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
 
 running = True
-initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
+initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True; generateNewRowOfBlocksFlag = True
 balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]
 ball_starting_point_x = SCREEN_WIDTH // 2
 cyclesPast = 0
@@ -125,15 +176,12 @@ while(running):
                 new_isMoving = new_isMoving
             )
 
-
-    for ball in balls:
-        pygame.draw.circle(
-            surface = screen,
-            color = pygame.Color("#FDA172"),
-            center = (ball.x, ball.y),
-            radius = 5
-        )
+    if(generateNewRowOfBlocksFlag):
+        blocks = generateNewRowOfBlocks()
+        generateNewRowOfBlocksFlag = False
     
+    drawBalls(screen, balls)
+    drawBlocks(screen, blocks)
 
     if(initialMovement and cyclesPast % 5 == 0):
         cyclesPast = 0
