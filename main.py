@@ -9,13 +9,8 @@ class Ball():
         self.y = y
         self.angle = -1
         self.isMoving = False
+        self.radius = 5
         self.color = pygame.Color("#FDA172")
-
-    def updateBall(self, new_x, new_y, new_angle, new_isMoving):
-        self.x = new_x
-        self.y = new_y
-        self.angle = new_angle
-        self.isMoving = new_isMoving
 
     def startMoving(self, new_angle):
         self.angle = new_angle 
@@ -26,20 +21,81 @@ class Ball():
             surface = screen,
             color = self.color,
             center = (self.x, self.y),
-            radius = 5
+            radius = self.radius
         )
 
-    def moveBall(self, isStartingBallMissing, ball_starting_point_x):
+    def determineCollisionSide(self, block):
+        # Has some bugs!!! NEEDS BETTER COLLISION ALGORITHM
+        sideIndicators = {
+            "Left": (block.x, 0),
+            "Top": (0, block.y),
+            "Right": (block.x + block.width, 0),
+            "Bottom": (0, block.y + block.height)
+        }
+        minDistance = min(
+            abs(self.x + self.radius - sideIndicators["Left"][0]),
+            abs(self.x - self.radius - sideIndicators["Right"][0]),
+            abs(self.y + self.radius - sideIndicators["Top"][1]),
+            abs(self.y - self.radius - sideIndicators["Bottom"][1])
+        )
+        if( 
+            (
+                minDistance == abs(self.x + self.radius - sideIndicators["Left"][0]) and 
+                minDistance == abs(self.y + self.radius - sideIndicators["Top"][1])
+            ) or 
+            (
+                minDistance == abs(self.x + self.radius - sideIndicators["Left"][0]) and
+                minDistance == abs(self.y - self.radius - sideIndicators["Bottom"][1])
+            ) or
+            (
+                minDistance == abs(self.x - self.radius - sideIndicators["Right"][0]) and
+                minDistance == abs(self.y + self.radius - sideIndicators["Top"][1])
+            ) or
+            (
+                minDistance == abs(self.x - self.radius - sideIndicators["Right"][0]) and 
+                minDistance == abs(self.y - self.radius - sideIndicators["Bottom"][1])
+            ) 
+        ):
+            return "Corner"
+
+        elif(minDistance == abs(self.x + self.radius - sideIndicators["Left"][0])):
+            return "Left"
+        elif(minDistance == abs(self.x - self.radius - sideIndicators["Right"][0])):
+            return "Right"
+        elif(minDistance == abs(self.y + self.radius - sideIndicators["Top"][1])):
+            return "Top"
+        
+        return "Bottom"
+
+            
+
+
+    def moveBall(self, isStartingBallMissing, ball_starting_point_x, blocks):
         self.isMoving = True
 
         if((self.x >= SCREEN_WIDTH or self.x <= 0) and (self.y <= 0)):
-            self.angle = math.pi + self.angle        
+            self.angle = math.pi + self.angle
         elif(self.x >= SCREEN_WIDTH or self.x <= 0):
             self.angle = math.pi - self.angle
         elif(self.y <= 0):
             self.angle = 2 * math.pi - self.angle
         elif(self.y >= SCREEN_HEIGHT):
             self.angle = -1
+        else:
+            for block in blocks:
+                if(self.x + self.radius >= block.x and self.x - self.radius <= block.x + block.width and
+                   self.y + self.radius >= block.y and self.y - self.radius <= block.y + block.height):
+                    collisionSide = self.determineCollisionSide(block)
+                    if(collisionSide == "Right" or collisionSide == "Left"):
+                        self.angle = math.pi - self.angle
+                    elif(collisionSide == "Bottom" or collisionSide == "Top"):
+                        self.angle = 2 * math.pi - self.angle
+                    else:
+                        self.angle = math.pi + self.angle
+                    
+                    block.value -= 1
+                    
+
 
         if(self.angle == -1):
             if(isStartingBallMissing):
@@ -135,7 +191,10 @@ def drawBalls(screen, balls):
 
 def drawBlocks(screen, blocks):
     for block in blocks:
-        block.drawBlock(screen)
+        if(block.value <= 0):
+            blocks.remove(block)
+        else:
+            block.drawBlock(screen)
 
 
 
@@ -183,7 +242,7 @@ while(running):
     for ball in balls:
         if(ball.isMoving):
             areBallsMoving = True
-            isStartingBallMissing, returned_x = ball.moveBall(isStartingBallMissing, ball_starting_point_x)
+            isStartingBallMissing, returned_x = ball.moveBall(isStartingBallMissing, ball_starting_point_x, blocks)
             if(returned_x):
                 ball_starting_point_x = returned_x
 
