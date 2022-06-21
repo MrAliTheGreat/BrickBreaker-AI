@@ -27,7 +27,31 @@ class Ball():
             color = self.color,
             center = (self.x, self.y),
             radius = 5
-        )           
+        )
+
+    def moveBall(self, isStartingBallMissing, ball_starting_point_x):
+        self.isMoving = True
+
+        if((self.x >= SCREEN_WIDTH or self.x <= 0) and (self.y <= 0)):
+            self.angle = math.pi + self.angle        
+        elif(self.x >= SCREEN_WIDTH or self.x <= 0):
+            self.angle = math.pi - self.angle
+        elif(self.y <= 0):
+            self.angle = 2 * math.pi - self.angle
+        elif(self.y >= SCREEN_HEIGHT):
+            self.angle = -1
+
+        if(self.angle == -1):
+            if(isStartingBallMissing):
+                self.y = 590; self.isMoving = False
+                isStartingBallMissing = False
+                return isStartingBallMissing, self.x
+            
+            self.x = ball_starting_point_x; self.y = 590; self.isMoving = False
+            return isStartingBallMissing, None
+
+        self.x += MOVE_SPEED * math.cos(self.angle); self.y -= MOVE_SPEED * math.sin(self.angle)
+        return isStartingBallMissing, None
 
 class Block():
     def __init__(self, x, y, value):
@@ -86,18 +110,6 @@ def radian2degree(radian):
 def degree2radian(degree):
     return degree * math.pi / 180
 
-def moveBall(current_x, current_y, moveAngle):
-    if((current_x >= SCREEN_WIDTH or current_x <= 0) and (current_y <= 0)):
-        moveAngle = math.pi + moveAngle        
-    elif(current_x >= SCREEN_WIDTH or current_x <= 0):
-        moveAngle = math.pi - moveAngle
-    elif(current_y <= 0):
-        moveAngle = 2 * math.pi - moveAngle
-    elif(current_y >= SCREEN_HEIGHT):
-        moveAngle = -1
-
-    return current_x + MOVE_SPEED * math.cos(moveAngle), current_y - MOVE_SPEED * math.sin(moveAngle), moveAngle
-
 def generateNewRowOfBlocks(score):
     distanceToNextHorizontalBlock = 79    
     generatedBlocks = []
@@ -141,7 +153,7 @@ STARTING_BLOCK_X = 10; STARTING_BLOCK_Y = 50
 screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
 
 running = True
-initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
+drawIndicatorFlag = True; detectMouseClickFlag = True
 generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False
 balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]; blocks = []
 ball_starting_point_x = SCREEN_WIDTH // 2
@@ -153,7 +165,7 @@ while(running):
         if(event.type == pygame.QUIT):
             running = False
         elif(event.type == pygame.MOUSEBUTTONDOWN and detectMouseClickFlag):
-            starting_ball_missing = True; drawIndicatorFlag = False; detectMouseClickFlag = False
+            isStartingBallMissing = True; drawIndicatorFlag = False; detectMouseClickFlag = False
             starting_angle = calculateAngle(
                 start_x = ball_starting_point_x,
                 start_y = 590,
@@ -161,7 +173,7 @@ while(running):
                 end_y = pygame.mouse.get_pos()[1]
             )            
             balls[0].startMoving(starting_angle)
-            initialMovement = True; generateNewRowOfBlocksHelperFlag = True
+            generateNewRowOfBlocksHelperFlag = True
             score += 1
 
 
@@ -170,26 +182,10 @@ while(running):
     areBallsMoving = False; cyclesPast += 1
     for ball in balls:
         if(ball.isMoving):
-            new_isMoving = True
-            new_x, new_y, new_angle = moveBall(
-                current_x = ball.x,
-                current_y = ball.y,
-                moveAngle = ball.angle
-            )
-            if(new_angle == -1):
-                if(starting_ball_missing):
-                    ball_starting_point_x = ball.x
-                    starting_ball_missing = False
-                new_x = ball_starting_point_x; new_y = 590; new_isMoving = False
-                initialMovement = False
-
-            areBallsMoving = True      
-            ball.updateBall(
-                new_x = new_x,
-                new_y = new_y,
-                new_angle = new_angle,
-                new_isMoving = new_isMoving
-            )
+            areBallsMoving = True
+            isStartingBallMissing, returned_x = ball.moveBall(isStartingBallMissing, ball_starting_point_x)
+            if(returned_x):
+                ball_starting_point_x = returned_x
 
     if(generateNewRowOfBlocksFlag):
         moveExistingBlocksDown(blocks)
@@ -199,7 +195,7 @@ while(running):
     drawBalls(screen, balls)
     drawBlocks(screen, blocks)
 
-    if(initialMovement and cyclesPast % 5 == 0):
+    if(cyclesPast % 5 == 0):
         cyclesPast = 0
         if(numBallsInPlay < score - 1):
             newBall = Ball(
@@ -216,7 +212,7 @@ while(running):
             generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False
         
         numBallsInPlay = 1
-        initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
+        drawIndicatorFlag = True; detectMouseClickFlag = True
         balls.clear()
         balls = [Ball(x = ball_starting_point_x, y = 590)]
 
