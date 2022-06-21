@@ -127,7 +127,8 @@ STARTING_BLOCK_X = 10; STARTING_BLOCK_Y = 50
 screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
 
 running = True
-initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True; generateNewRowOfBlocksFlag = True
+initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
+generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False
 balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]
 ball_starting_point_x = SCREEN_WIDTH // 2
 cyclesPast = 0
@@ -146,7 +147,7 @@ while(running):
                 end_y = pygame.mouse.get_pos()[1]
             )            
             balls[0].startMoving(starting_angle)
-            initialMovement = True
+            initialMovement = True; generateNewRowOfBlocksHelperFlag = True
             score += 1
 
 
@@ -196,6 +197,9 @@ while(running):
     
 
     if(not areBallsMoving):
+        if(generateNewRowOfBlocksHelperFlag):
+            generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False
+        
         numBallsInPlay = 1
         initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
         balls.clear()
