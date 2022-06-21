@@ -30,12 +30,14 @@ class Ball():
         )           
 
 class Block():
-    def __init__(self, x, y):
+    def __init__(self, x, y, value):
         self.x = x
         self.y = y
         self.width = 75
         self.height = 30
         self.color = pygame.Color("#CAFEA7")
+        self.value = value
+        self.valueFont = pygame.font.SysFont("Comic Sans MS", 20)
 
     def drawBlock(self, screen):
         pygame.draw.rect(
@@ -43,6 +45,10 @@ class Block():
             color = self.color,
             rect = (self.x, self.y, self.width, self.height)
         )
+        valueText = self.valueFont.render(f"{self.value}", True, pygame.Color("#000000"))
+        value_x = self.x + self.width // 2 - valueText.get_rect().width // 2
+        value_y = self.y + self.height // 2 - valueText.get_rect().height // 2
+        screen.blit(source = valueText, dest = (value_x, value_y))        
 
     def moveBlockDown(self):
         distanceToNextVerticalBlock = 33
@@ -92,7 +98,7 @@ def moveBall(current_x, current_y, moveAngle):
 
     return current_x + MOVE_SPEED * math.cos(moveAngle), current_y - MOVE_SPEED * math.sin(moveAngle), moveAngle
 
-def generateNewRowOfBlocks():
+def generateNewRowOfBlocks(score):
     distanceToNextHorizontalBlock = 79    
     generatedBlocks = []
     numBlocks = randint(1, 10)
@@ -100,7 +106,8 @@ def generateNewRowOfBlocks():
         generatedBlocks.append(
             Block(
                 x = STARTING_BLOCK_X + randint(0, 9) * distanceToNextHorizontalBlock,
-                y = STARTING_BLOCK_Y
+                y = STARTING_BLOCK_Y,
+                value = score
             )
         )
     return generatedBlocks
@@ -186,7 +193,7 @@ while(running):
 
     if(generateNewRowOfBlocksFlag):
         moveExistingBlocksDown(blocks)
-        blocks.extend(generateNewRowOfBlocks())
+        blocks.extend(generateNewRowOfBlocks(score))
         generateNewRowOfBlocksFlag = False
     
     drawBalls(screen, balls)
