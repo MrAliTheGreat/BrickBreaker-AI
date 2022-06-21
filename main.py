@@ -42,7 +42,11 @@ class Block():
             surface = screen,
             color = self.color,
             rect = (self.x, self.y, self.width, self.height)
-        )        
+        )
+
+    def moveBlockDown(self):
+        distanceToNextVerticalBlock = 33
+        self.y += distanceToNextVerticalBlock
 
 
 
@@ -89,8 +93,7 @@ def moveBall(current_x, current_y, moveAngle):
     return current_x + MOVE_SPEED * math.cos(moveAngle), current_y - MOVE_SPEED * math.sin(moveAngle), moveAngle
 
 def generateNewRowOfBlocks():
-    distanceToNextHorizontalBlock = 79
-    # distanceToNextVerticalBlock = 33    
+    distanceToNextHorizontalBlock = 79    
     generatedBlocks = []
     numBlocks = randint(1, 10)
     for _ in range(numBlocks):
@@ -101,6 +104,10 @@ def generateNewRowOfBlocks():
             )
         )
     return generatedBlocks
+
+def moveExistingBlocksDown(blocks):
+    for block in blocks:
+        block.moveBlockDown()
 
 
 def drawBalls(screen, balls):
@@ -129,7 +136,7 @@ screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
 running = True
 initialMovement = False; drawIndicatorFlag = True; detectMouseClickFlag = True
 generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False
-balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]
+balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]; blocks = []
 ball_starting_point_x = SCREEN_WIDTH // 2
 cyclesPast = 0
 score = 1; numBallsInPlay = 1
@@ -178,7 +185,8 @@ while(running):
             )
 
     if(generateNewRowOfBlocksFlag):
-        blocks = generateNewRowOfBlocks()
+        moveExistingBlocksDown(blocks)
+        blocks.extend(generateNewRowOfBlocks())
         generateNewRowOfBlocksFlag = False
     
     drawBalls(screen, balls)
