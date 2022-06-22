@@ -24,51 +24,29 @@ class Ball():
             radius = self.radius
         )
 
-    def determineCollisionSide(self, block):
-        # Has some bugs!!! NEEDS BETTER COLLISION ALGORITHM
-        sideIndicators = {
-            "Left": (block.x, 0),
-            "Top": (0, block.y),
-            "Right": (block.x + block.width, 0),
-            "Bottom": (0, block.y + block.height)
-        }
-        minDistance = min(
-            abs(self.x + self.radius - sideIndicators["Left"][0]),
-            abs(self.x - self.radius - sideIndicators["Right"][0]),
-            abs(self.y + self.radius - sideIndicators["Top"][1]),
-            abs(self.y - self.radius - sideIndicators["Bottom"][1])
-        )
-        if( 
-            (
-                minDistance == abs(self.x + self.radius - sideIndicators["Left"][0]) and 
-                minDistance == abs(self.y + self.radius - sideIndicators["Top"][1])
-            ) or 
-            (
-                minDistance == abs(self.x + self.radius - sideIndicators["Left"][0]) and
-                minDistance == abs(self.y - self.radius - sideIndicators["Bottom"][1])
-            ) or
-            (
-                minDistance == abs(self.x - self.radius - sideIndicators["Right"][0]) and
-                minDistance == abs(self.y + self.radius - sideIndicators["Top"][1])
-            ) or
-            (
-                minDistance == abs(self.x - self.radius - sideIndicators["Right"][0]) and 
-                minDistance == abs(self.y - self.radius - sideIndicators["Bottom"][1])
-            ) 
-        ):
-            return "Corner"
-
-        elif(minDistance == abs(self.x + self.radius - sideIndicators["Left"][0])):
-            return "Left"
-        elif(minDistance == abs(self.x - self.radius - sideIndicators["Right"][0])):
-            return "Right"
-        elif(minDistance == abs(self.y + self.radius - sideIndicators["Top"][1])):
-            return "Top"
+    def detectCollision(self, block):
+        blockNearestPointToBall_x = self.x; blockNearestPointToBall_y = self.y
+        collisionSide = ""; x_collision = False; y_collision = False 
         
-        return "Bottom"
+        if(self.x <= block.x):
+            blockNearestPointToBall_x = block.x
+            collisionSide = "Left"; x_collision = True
+        elif(self.x >= block.x + block.width):
+            blockNearestPointToBall_x = block.x + block.width
+            collisionSide = "Right"; x_collision = True
 
-            
+        if(self.y <= block.y):
+            blockNearestPointToBall_y = block.y
+            collisionSide = "Top"; y_collision = True
+        elif(self.y >= block.y + block.height):
+            blockNearestPointToBall_y = block.y + block.height
+            collisionSide = "Bottom"; y_collision = True
 
+        if(math.sqrt( (blockNearestPointToBall_x - self.x) ** 2 + (blockNearestPointToBall_y - self.y) ** 2 ) > self.radius):
+            return None
+        if(x_collision and y_collision):
+            return "Corner"
+        return collisionSide
 
     def moveBall(self, isStartingBallMissing, ball_starting_point_x, blocks):
         self.isMoving = True
@@ -82,20 +60,19 @@ class Ball():
         elif(self.y >= SCREEN_HEIGHT):
             self.angle = -1
         else:
-            for block in blocks:
-                if(self.x + self.radius >= block.x and self.x - self.radius <= block.x + block.width and
-                   self.y + self.radius >= block.y and self.y - self.radius <= block.y + block.height):
-                    collisionSide = self.determineCollisionSide(block)
-                    if(collisionSide == "Right" or collisionSide == "Left"):
-                        self.angle = math.pi - self.angle
-                    elif(collisionSide == "Bottom" or collisionSide == "Top"):
-                        self.angle = 2 * math.pi - self.angle
-                    else:
-                        self.angle = math.pi + self.angle
-                    
-                    block.value -= 1
-                    
+            pass
 
+        for block in blocks:
+            collisionSide = self.detectCollision(block)
+            if(collisionSide):
+                if(collisionSide == "Right" or collisionSide == "Left"):
+                    self.angle = math.pi - self.angle
+                elif(collisionSide == "Bottom" or collisionSide == "Top"):
+                    self.angle = 2 * math.pi - self.angle
+                else:
+                    self.angle = math.pi + self.angle
+                
+                block.value -= 1
 
         if(self.angle == -1):
             if(isStartingBallMissing):
@@ -224,6 +201,7 @@ while(running):
         if(event.type == pygame.QUIT):
             running = False
         elif(event.type == pygame.MOUSEBUTTONDOWN and detectMouseClickFlag):
+            cyclesPast = 0
             isStartingBallMissing = True; drawIndicatorFlag = False; detectMouseClickFlag = False
             starting_angle = calculateAngle(
                 start_x = ball_starting_point_x,
