@@ -1,4 +1,5 @@
 import math
+from time import sleep
 import pygame
 from random import randint
 
@@ -303,7 +304,11 @@ def drawBlocks(screen, blocks):
         else:
             block.drawBlock(screen)
 
-
+def checkGameStatus(blocks):
+    for block in blocks:
+        if(block.y + block.height >= STARTING_BLOCK_Y + NUM_LEVELS * 33 - 10):
+            return False
+    return True
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -319,7 +324,7 @@ NUM_LEVELS = 12
 
 screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
 
-running = True
+running = True; lost = True
 drawIndicatorFlag = True; detectMouseClickFlag = True
 generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False
 balls = [Ball(x = SCREEN_WIDTH // 2, y = 590)]; blocks = []
@@ -330,7 +335,7 @@ score = 1; numBallsInPlay = 1
 while(running):
     for event in pygame.event.get():
         if(event.type == pygame.QUIT):
-            running = False
+            running = False; lost = False
         elif(event.type == pygame.MOUSEBUTTONDOWN and detectMouseClickFlag):
             cyclesPast = 0
             isStartingBallMissing = True; drawIndicatorFlag = False; detectMouseClickFlag = False
@@ -358,6 +363,7 @@ while(running):
     if(generateNewRowOfBlocksFlag):
         moveExistingBlocksDown(blocks)
         blocks.extend(generateNewRowOfBlocks(score))
+        running = checkGameStatus(blocks)
         generateNewRowOfBlocksFlag = False
     
     drawBalls(screen, balls)
@@ -431,4 +437,16 @@ while(running):
     
     clock.tick(FPS)
 
+if(lost):
+    endFont = pygame.font.SysFont("Comic Sans MS", 175)
+    endText = endFont.render(f"You Lost!", True, pygame.Color("#FFFFFF"))
+    messageWidth, messageHeight = endText.get_size()
+    pygame.draw.rect(
+        surface = screen,
+        color = pygame.Color("#DE0A26"),
+        rect = (SCREEN_WIDTH // 2 - messageWidth // 2, SCREEN_HEIGHT // 2 - messageHeight // 2, messageWidth, messageHeight)
+    )
+    screen.blit(source = endText, dest = (SCREEN_WIDTH // 2 - messageWidth // 2, SCREEN_HEIGHT // 2 - messageHeight // 2))
+    pygame.display.flip()
+    sleep(2)
 pygame.quit()
