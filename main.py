@@ -313,8 +313,9 @@ textFont = pygame.font.SysFont("Comic Sans MS", 20)
 SCREEN_WIDTH = 800; SCREEN_HEIGHT = 600
 FPS = 30
 MOVE_SPEED = 6
-INDICATOR_LENGTH = 150
+INDICATOR_LENGTH = 125
 STARTING_BLOCK_X = 7; STARTING_BLOCK_Y = 50
+NUM_LEVELS = 12
 
 screen = pygame.display.set_mode( [SCREEN_WIDTH, SCREEN_HEIGHT] )
 
@@ -412,6 +413,19 @@ while(running):
     else:
         displayScore = score    
     scoreText = textFont.render(f"Score: {displayScore}", True, pygame.Color("#FFFFFF")) # text, antialias, color
+    pygame.draw.line(
+        surface = screen,
+        color = pygame.Color("#FFFFFF"),
+        start_pos = (
+            0,
+            STARTING_BLOCK_Y + NUM_LEVELS * 33
+        ),
+        end_pos = (
+            SCREEN_WIDTH,
+            STARTING_BLOCK_Y + NUM_LEVELS * 33
+        ),
+        width = 5
+    )    
     screen.blit(source = scoreText, dest = (10, 10))
     pygame.display.flip()
     
