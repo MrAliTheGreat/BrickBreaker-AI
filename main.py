@@ -117,26 +117,44 @@ class Ball():
 
     def detectCollision(self, block):
         blockNearestPointToBall_x = self.x; blockNearestPointToBall_y = self.y
-        collisionSide = "Inside"; x_collision = False; y_collision = False 
+        collisionSide = "Inside"; x_collision = ""; y_collision = "" 
         
         if(self.x <= block.x):
             blockNearestPointToBall_x = block.x
-            collisionSide = "Left"; x_collision = True
+            collisionSide = "Left"; x_collision = "Left"
         elif(self.x >= block.x + block.width):
             blockNearestPointToBall_x = block.x + block.width
-            collisionSide = "Right"; x_collision = True
+            collisionSide = "Right"; x_collision = "Right"
 
         if(self.y <= block.y):
             blockNearestPointToBall_y = block.y
-            collisionSide = "Top"; y_collision = True
+            collisionSide = "Top"; y_collision = "Top"
         elif(self.y >= block.y + block.height):
             blockNearestPointToBall_y = block.y + block.height
-            collisionSide = "Bottom"; y_collision = True
+            collisionSide = "Bottom"; y_collision = "Bottom"
 
         if(math.sqrt( (blockNearestPointToBall_x - self.x) ** 2 + (blockNearestPointToBall_y - self.y) ** 2 ) > self.radius):
             return "NO_COLLISION"
         if(x_collision and y_collision):
-            return "Corner"
+            if(
+                (
+                    x_collision == "Left" and y_collision == "Top" and
+                    self.angle >= 1.5 * math.pi and (self.angle < 2 * math.pi or self.angle == 0)
+                ) or
+                (
+                    x_collision == "Left" and y_collision == "Bottom" and
+                    self.angle >= 0 and self.angle <= 0.5 * math.pi                    
+                ) or
+                (
+                    x_collision == "Right" and y_collision == "Top" and
+                    self.angle >= math.pi and self.angle <= 1.5 * math.pi  
+                ) or
+                (
+                    x_collision == "Right" and y_collision == "Bottom" and
+                    self.angle >= 0.5 * math.pi and self.angle <= math.pi  
+                )
+            ):
+                return "Corner"
         if(collisionSide == "Inside"):
             return self.determineSideOfEntry(block)
         return collisionSide
