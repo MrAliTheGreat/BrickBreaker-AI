@@ -3,7 +3,7 @@ from time import sleep
 import pygame
 from random import randint
 
-from utils import calculateAngle
+import utils
 import Constants
 from Ball import Ball
 from Block import Block
@@ -58,7 +58,7 @@ screen = pygame.display.set_mode( [Constants.SCREEN_WIDTH, Constants.SCREEN_HEIG
 
 running = True; lost = True
 drawIndicatorFlag = True; detectMouseClickFlag = True
-generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False
+generateNewRowOfBlocksFlag = True; generateNewRowOfBlocksHelperFlag = False; areBallsMoving = False
 balls = [Ball(x = Constants.SCREEN_WIDTH // 2, y = 590)]; blocks = []
 ball_starting_point_x = Constants.SCREEN_WIDTH // 2
 cyclesPast = 0
@@ -68,10 +68,10 @@ while(running):
     for event in pygame.event.get():
         if(event.type == pygame.QUIT):
             running = False; lost = False
-        elif(event.type == pygame.MOUSEBUTTONDOWN and detectMouseClickFlag):
+        elif(event.type == pygame.MOUSEBUTTONDOWN and detectMouseClickFlag and not Constants.AI):
             cyclesPast = 0
             isStartingBallMissing = True; drawIndicatorFlag = False; detectMouseClickFlag = False
-            starting_angle = calculateAngle(
+            starting_angle = utils.calculateAngle(
                 start_x = ball_starting_point_x,
                 start_y = 590,
                 end_x = pygame.mouse.get_pos()[0],
@@ -81,6 +81,12 @@ while(running):
             generateNewRowOfBlocksHelperFlag = True
             score += 1
 
+    if(Constants.AI and not areBallsMoving):
+        cyclesPast = 0
+        starting_angle = utils.degree2radian(50)          
+        balls[0].startMoving(starting_angle)
+        isStartingBallMissing = True; generateNewRowOfBlocksHelperFlag = True
+        score += 1
 
     screen.fill( (0, 0, 0) )
 
@@ -123,8 +129,8 @@ while(running):
         balls = [Ball(x = ball_starting_point_x, y = 590)]
 
 
-    if(drawIndicatorFlag):
-        indicatorAngle = calculateAngle(
+    if(drawIndicatorFlag and not Constants.AI):
+        indicatorAngle = utils.calculateAngle(
             start_x = ball_starting_point_x,
             start_y = 590,
             end_x = pygame.mouse.get_pos()[0],
@@ -150,7 +156,9 @@ while(running):
         displayScore = score - 1
     else:
         displayScore = score    
+    
     scoreText = textFont.render(f"Score: {displayScore}", True, pygame.Color("#FFFFFF")) # text, antialias, color
+    screen.blit(source = scoreText, dest = (10, 10))
     pygame.draw.line(
         surface = screen,
         color = pygame.Color("#FFFFFF"),
@@ -164,10 +172,10 @@ while(running):
         ),
         width = 5
     )    
-    screen.blit(source = scoreText, dest = (10, 10))
     pygame.display.flip()
     
     clock.tick(Constants.FPS)
+
 
 if(lost):
     endFont = pygame.font.SysFont("Comic Sans MS", 175)
